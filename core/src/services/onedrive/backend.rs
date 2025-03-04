@@ -298,9 +298,6 @@ impl OnedriveBackend {
     ) -> Result<Response<Buffer>> {
         let mut req = Request::put(url);
 
-        let auth_header_content = format!("Bearer {}", self.access_token);
-        req = req.header(header::AUTHORIZATION, auth_header_content);
-
         let range = format!("bytes {}-{}/{}", offset, chunk_end, total_len);
         req = req.header("Content-Range".to_string(), range);
 
