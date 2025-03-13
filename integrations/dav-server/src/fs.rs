@@ -119,7 +119,7 @@ impl DavFileSystem for OpendalFs {
 
     fn create_dir<'a>(&'a self, path: &'a DavPath) -> FsFuture<'a, ()> {
         async move {
-            let path = self.fs_path(path)?;
+            let mut path = self.fs_path(path)?;
 
             // check if the parent path is exist.
             // During MKCOL processing, a server MUST make the Request-URI a member of its parent collection, unless the Request-URI is "/".  If no such ancestor exists, the method MUST fail.
@@ -127,13 +127,19 @@ impl DavFileSystem for OpendalFs {
             let parent = Path::new(&path).parent().unwrap();
             match self.op.exists(parent.to_str().unwrap()).await {
                 Ok(exist) => {
+                    log::debug!("parent exists: {:?}", parent);
                     if !exist && parent != Path::new("/") {
                         return Err(FsError::NotFound);
                     }
                 }
                 Err(e) => {
+                    log::error!("parent doesn't exist: {:?}", parent);
                     return Err(convert_error(e));
                 }
+            }
+
+            if !path.ends_with('/') {
+                path = path + "/";
             }
 
             let path = path.as_str();
@@ -141,16 +147,26 @@ impl DavFileSystem for OpendalFs {
             let exist = self.op.exists(path).await;
             match exist {
                 Ok(exist) => match exist {
-                    true => Err(FsError::Exists),
+                    true => {
+                        log::error!("path already exists: {:?}", path);
+                        Err(FsError::Exists)
+                    },
                     false => {
+                        log::debug!("create_dir {:?}", path);
                         let res = self.op.create_dir(path).await;
                         match res {
                             Ok(_) => Ok(()),
-                            Err(e) => Err(convert_error(e)),
+                            Err(e) => {
+                                log::error!("failed to create_dir: {:?}: {:?}", path, e);
+                                Err(convert_error(e))
+                            },
                         }
                     }
                 },
-                Err(e) => Err(convert_error(e)),
+                Err(e) => {
+                    log::error!("failed to check if path exists: {:?}", path);
+                    Err(convert_error(e))
+                },
             }
         }
         .boxed()

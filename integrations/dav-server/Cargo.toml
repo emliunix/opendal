@@ -28,6 +28,7 @@ repository = "https://github.com/apache/opendal"
 rust-version = "1.75"
 
 [dependencies]
+log = { version = "0.4.22", features = ["std"] }
 anyhow = "1"
 bytes = { version = "1.4.0" }
 dav-server = { version = "0.7.0" }

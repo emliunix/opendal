@@ -53,7 +53,11 @@ pub fn build_rooted_abs_path(root: &str, path: &str) -> String {
         p
     } else {
         debug_assert!(!path.starts_with('/'), "path must not start with /");
-        p + path
+        if path.ends_with('/') {
+            p + &path[..path.len() - 1]
+        } else {
+            p + path
+        }
     }
 }
 

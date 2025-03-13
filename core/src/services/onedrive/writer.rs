@@ -134,6 +134,7 @@ impl OneDriveWriter {
             percent_encode_path(&self.path)
         );
         let body = OneDriveUploadSessionCreationRequestBody::new(file_name_from_path.to_string());
+        log::debug!("create_upload_session: url: {}, body: {:?}", url, body);
 
         let resp = self
             .backend
@@ -148,6 +149,7 @@ impl OneDriveWriter {
                 let bs = resp.into_body();
                 let result: OneDriveUploadSessionCreationResponseBody =
                     serde_json::from_reader(bs.reader()).map_err(new_json_deserialize_error)?;
+                log::debug!("create_upload_session: result: {:?}", result);
                 Ok(result)
             }
             _ => Err(parse_error(resp)),

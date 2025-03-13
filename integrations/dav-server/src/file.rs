@@ -61,6 +61,7 @@ impl OpendalFile {
     /// Create a new opendal file.
     pub async fn open(op: Operator, path: String, options: OpenOptions) -> FsResult<Self> {
         let state = if options.read {
+            log::debug!("read file: {}", path);
             let r = op
                 .reader(&path)
                 .await
@@ -70,6 +71,7 @@ impl OpendalFile {
                 .map_err(convert_error)?;
             State::Read(r)
         } else if options.write {
+            log::debug!("write file: {}", path);
             let w = op
                 .writer_with(&path)
                 .append(options.append)
@@ -93,6 +95,7 @@ impl OpendalFile {
 impl DavFile for OpendalFile {
     fn metadata(&mut self) -> FsFuture<Box<dyn DavMetaData>> {
         async move {
+            log::debug!("stat file: {}", self.path);
             self.op
                 .stat(&self.path)
                 .await
@@ -106,6 +109,7 @@ impl DavFile for OpendalFile {
 
     fn write_buf(&mut self, mut buf: Box<dyn Buf + Send>) -> FsFuture<()> {
         async move {
+            log::debug!("write_buf file: {}", self.path);
             let State::Write(w) = &mut self.state else {
                 return Err(FsError::GeneralFailure);
             };
@@ -120,6 +124,7 @@ impl DavFile for OpendalFile {
 
     fn write_bytes(&mut self, buf: Bytes) -> FsFuture<()> {
         async move {
+            log::debug!("write_bytes file: {}", self.path);
             let State::Write(w) = &mut self.state else {
                 return Err(FsError::GeneralFailure);
             };
@@ -131,6 +136,7 @@ impl DavFile for OpendalFile {
 
     fn read_bytes(&mut self, count: usize) -> FsFuture<Bytes> {
         async move {
+            log::debug!("read_bytes file: {}", self.path);
             let State::Read(r) = &mut self.state else {
                 return Err(FsError::GeneralFailure);
             };
@@ -147,6 +153,7 @@ impl DavFile for OpendalFile {
 
     fn seek(&mut self, pos: SeekFrom) -> FsFuture<u64> {
         async move {
+            log::debug!("seek file: {}", self.path);
             let State::Read(r) = &mut self.state else {
                 return Err(FsError::GeneralFailure);
             };
@@ -158,6 +165,7 @@ impl DavFile for OpendalFile {
 
     fn flush(&mut self) -> FsFuture<()> {
         async move {
+            log::debug!("flush file: {}", self.path);
             let State::Write(w) = &mut self.state else {
                 return Err(FsError::GeneralFailure);
             };

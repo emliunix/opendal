@@ -47,6 +47,7 @@ impl oio::PageList for OnedriveLister {
     async fn next_page(&self, ctx: &mut oio::PageContext) -> Result<()> {
         let request_url = if ctx.token.is_empty() {
             let path = build_rooted_abs_path(&self.root, &self.path);
+            log::info!("OnedriveLister::next_page: {:?}", path);
             let url: String = if path == "." || path == "/" {
                 "https://graph.microsoft.com/v1.0/me/drive/root/children".to_string()
             } else {
@@ -78,6 +79,8 @@ impl oio::PageList for OnedriveLister {
         let bytes = resp.into_body();
         let decoded_response: GraphApiOnedriveListResponse =
             serde_json::from_reader(bytes.reader()).map_err(new_json_deserialize_error)?;
+
+        log::debug!("decoded_response: {:?}", decoded_response);
 
         // Include the current directory itself when handling the first page of the listing.
         if ctx.token.is_empty() && !ctx.done {
